@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sopa de Lletres: La Cèl·lula</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f0fdf4;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            font-weight: 700;
+            font-size: 1.25rem;
+            border-radius: 0.25rem;
+        }
+
+        .grid-cell:hover {
+            background-color: #dcfce7;
+        }
+
+        .grid-cell.selected {
+            background-color: #4ade80;
+            color: white;
+        }
+
+        .grid-cell.found {
+            background-color: #22c55e;
+            color: white;
+        }
+
+        .word-found {
+            text-decoration: line-through;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-green-600 p-6 text-white text-center">
+            <h1 class="text-3xl font-bold">La Cèl·lula: Sopa de Lletres</h1>
+            <p class="mt-2 opacity-90">Troba les 10 paraules amagades sobre la unitat de la vida!</p>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Game Board -->
+            <div class="lg:col-span-2">
+                <div id="grid-container" class="grid gap-1 bg-slate-100 p-2 rounded-xl border-2 border-slate-200">
+                    <!-- Cells will be generated here -->
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <h2 class="text-xl font-semibold mb-4 text-green-800">Paraules a trobar:</h2>
+                    <ul id="word-list" class="grid grid-cols-2 lg:grid-cols-1 gap-2">
+                        <!-- Words will be listed here -->
+                    </ul>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <button id="reset-btn" class="w-full bg-green-100 text-green-700 font-bold py-3 px-6 rounded-xl hover:bg-green-200 transition">
+                        Nova Partida
+                    </button>
+                    <div id="status-msg" class="text-center font-medium p-3 rounded-xl hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WORDS = ["CEL·LULA", "NUCLI", "MEMBRANA", "CITOPLASMA", "ORGÀNUL", "ADN", "MITOCONDRI", "VACÚOL", "PARET", "CLOROPLAST"];
+        const GRID_SIZE = 12;
+        let grid = [];
+        let foundWords = [];
+        let selection = []; // [{r, c}]
+
+        const gridContainer = document.getElementById('grid-container');
+        const wordListElement = document.getElementById('word-list');
+        const resetBtn = document.getElementById('reset-btn');
+        const statusMsg = document.getElementById('status-msg');
+
+        function initGame() {
+            grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(''));
+            foundWords = [];
+            selection = [];
+            statusMsg.classList.add('hidden');
+            
+            // Place words
+            WORDS.forEach(word => {
+                let placed = false;
+                while (!placed) {
+                    const direction = Math.floor(Math.random() * 3); // 0: Horitzontal, 1: Vertical, 2: Diagonal
+                    const row = Math.floor(Math.random() * GRID_SIZE);
+                    const col = Math.floor(Math.random() * GRID_SIZE);
+                    
+                    if (canPlace(word, row, col, direction)) {
+                        placeWord(word, row, col, direction);
+                        placed = true;
+                    }
+                }
+            });
+
+            // Fill empty cells
+            const alphabet = "ABCDEÈFGHIJKLMNOPQRSTUÚVWXYZ";
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (grid[r][c] === '') {
+                        grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
+                    }
+                }
+            }
+
+            renderBoard();
+            renderWordList();
+        }
+
+        function canPlace(word, row, col, dir) {
+            const dr = [0, 1, 1][dir];
+            const dc = [1, 0, 1][dir];
+
+            if (row + dr * word.length > GRID_SIZE || col + dc * word.length > GRID_SIZE) return false;
+
+            for (let i = 0; i < word.length; i++) {
+                const char = word[i].replace('·', '').replace('À', 'A').replace('È', 'E').replace('Ò', 'O').replace('Ú', 'U'); // simplified for placement check if needed, but we keep raw
+                const current = grid[row + i * dr][col + i * dc];
+                if (current !== '' && current !== word[i]) return false;
+            }
+            return true;
+        }
+
+        function placeWord(word, row, col, dir) {
+            const dr = [0, 1, 1][dir];
+            const dc = [1, 0, 1][dir];
+            for (let i = 0; i < word.length; i++) {
+                grid[row + i * dr][col + i * dc] = word[i];
+            }
+        }
+
+        function renderBoard() {
+            gridContainer.innerHTML = '';
+            gridContainer.style.gridTemplateColumns = `repeat(${GRID_SIZE}, minmax(0, 1fr))`;
+            
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell text-slate-700 bg-white';
+                    cell.textContent = grid[r][c];
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    
+                    cell.addEventListener('mousedown', () => startSelection(r, c));
+                    cell.addEventListener('mouseenter', () => updateSelection(r, c));
+                    cell.addEventListener('mouseup', endSelection);
+                    
+                    // Touch events for mobile
+                    cell.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        startSelection(r, c);
+                    });
+                    
+                    gridContainer.appendChild(cell);
+                }
+            }
+            window.addEventListener('mouseup', endSelection);
+        }
+
+        function renderWordList() {
+            wordListElement.innerHTML = '';
+            WORDS.sort().forEach(word => {
+                const li = document.createElement('li');
+                li.className = `px-3 py-1 rounded-lg font-medium ${foundWords.includes(word) ? 'word-found bg-slate-200' : 'text-slate-700'}`;
+                li.textContent = word;
+                li.id = `word-${word}`;
+                wordListElement.appendChild(li);
+            });
+        }
+
+        let isSelecting = false;
+        let startPos = null;
+
+        function startSelection(r, c) {
+            isSelecting = true;
+            startPos = { r, c };
+            selection = [{ r, c }];
+            highlightCells();
+        }
+
+        function updateSelection(r, c) {
+            if (!isSelecting) return;
+            
+            // Allow only straight lines (H, V, D)
+            const dr = r - startPos.r;
+            const dc = c - startPos.c;
+            
+            if (dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc)) {
+                selection = [];
+                const steps = Math.max(Math.abs(dr), Math.abs(dc));
+                const rStep = dr === 0 ? 0 : dr / steps;
+                const cStep = dc === 0 ? 0 : dc / steps;
+                
+                for (let i = 0; i <= steps; i++) {
+                    selection.push({
+                        r: startPos.r + i * rStep,
+                        c: startPos.c + i * cStep
+                    });
+                }
+                highlightCells();
+            }
+        }
+
+        function highlightCells() {
+            document.querySelectorAll('.grid-cell').forEach(cell => {
+                cell.classList.remove('selected');
+            });
+            selection.forEach(pos => {
+                const el = document.querySelector(`[data-r="${pos.r}"][data-c="${pos.c}"]`);
+                if (el) el.classList.add('selected');
+            });
+        }
+
+        function endSelection() {
+            if (!isSelecting) return;
+            isSelecting = false;
+            
+            const selectedWord = selection.map(pos => grid[pos.r][pos.c]).join('');
+            const reversedWord = selectedWord.split('').reverse().join('');
+            
+            if (WORDS.includes(selectedWord) && !foundWords.includes(selectedWord)) {
+                markFound(selectedWord, selection);
+            } else if (WORDS.includes(reversedWord) && !foundWords.includes(reversedWord)) {
+                markFound(reversedWord, selection);
+            }
+            
+            selection = [];
+            highlightCells();
+            checkWin();
+        }
+
+        function markFound(word, cells) {
+            foundWords.push(word);
+            cells.forEach(pos => {
+                const el = document.querySelector(`[data-r="${pos.r}"][data-c="${pos.c}"]`);
+                if (el) el.classList.add('found');
+            });
+            renderWordList();
+        }
+
+        function checkWin() {
+            if (foundWords.length === WORDS.length) {
+                statusMsg.textContent = "Felicitats! Has trobat totes les paraules! 🎉";
+                statusMsg.className = "text-center font-bold p-3 rounded-xl bg-green-500 text-white block";
+            }
+        }
+
+        resetBtn.addEventListener('click', initGame);
+        
+        // Finalize setup
+        window.onload = initGame;
+    </script>
+</body>
+</html>
