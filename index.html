@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Cèl·lula - Menú de Jocs</title>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --primary: #2c3e50;
+            --accent: #3498db;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 { color: var(--primary); font-size: 2.5rem; margin-bottom: 10px; }
+        p { color: #666; font-size: 1.1rem; }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--primary);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 2px solid transparent;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+        }
+
+        .game-card h2 {
+            margin: 10px 0;
+            font-size: 1.4rem;
+        }
+
+        .game-card p {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        footer {
+            margin-top: 50px;
+            color: #95a5a6;
+            font-size: 0.8rem;
+        }
+
+        /* Colors per a cada icona */
+        .color-1 { color: #e67e22; } /* Parelles */
+        .color-2 { color: #27ae60; } /* Sopa de lletres */
+        .color-3 { color: #9b59b6; } /* Trivial */
+        .color-4 { color: #e74c3c; } /* Flashcards */
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🔬 Projecte: La Cèl·lula</h1>
+        <p>Tria una activitat per repassar els conceptes de 6è de Primària</p>
+    </header>
+
+    <div class="menu-grid">
+        <a href="parellescelula.html" class="game-card">
+            <div class="icon color-1">🧩</div>
+            <h2>Parelles</h2>
+            <p>Relaciona cada orgànul amb la seva funció principal.</p>
+        </a>
+
+        <a href="sopadelletrescelula.html" class="game-card">
+            <div class="icon color-2">🔍</div>
+            <h2>Sopa de Lletres</h2>
+            <p>Troba els noms dels components cel·lulars amagats.</p>
+        </a>
+
+        <a href="trivial_celula.html" class="game-card">
+            <div class="icon color-3">❓</div>
+            <h2>El Trivial</h2>
+            <p>Demostra el que saps amb aquest test de preguntes.</p>
+        </a>
+
+        <a href="flashcards_celula.html" class="game-card">
+            <div class="icon color-4">🗂️</div>
+            <h2>Targetes d'Estudi</h2>
+            <p>Repassa els conceptes clau abans de l'examen.</p>
+        </a>
+    </div>
+
+    <footer>
+        CRP Maresme III • Ciències Naturals 6è Primària
+    </footer>
+
+</body>
+</html>
