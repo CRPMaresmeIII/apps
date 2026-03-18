@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Joc de la Cèl·lula - 6è Primària</title>
+    <title>Joc de la Cèl·lula - 6è Primària (Corregit)</title>
     <style>
         :root {
             --primary: #4CAF50;
-            --secondary: #2196F3;
             --bg: #f4f7f6;
             --card-back: #2c3e50;
+            --card-front: #ffffff;
         }
 
         body {
@@ -22,62 +22,88 @@
             padding: 20px;
         }
 
-        h1 { color: #333; margin-bottom: 10px; }
+        h1 { color: #333; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
         .stats { margin-bottom: 20px; font-size: 1.2rem; font-weight: bold; }
 
+        /* Contenidor principal del joc amb perspectiva per l'efecte 3D */
         .game-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
+            gap: 15px;
             max-width: 800px;
             width: 100%;
+            perspective: 1000px; /* Necessari per l'efecte 3D */
         }
 
-        .card {
+        /* L'element que conté les dues cares */
+        .card-container {
             height: 120px;
-            background-color: var(--card-back);
-            border-radius: 8px;
             cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Estat girat (quan la carta té la classe 'flipped') */
+        .card-container.flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Estat emparellat (amaguem la carta) */
+        .card-container.matched {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Estil comú per a les dues cares de la carta */
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden; /* Amaga la cara del darrere quan gira */
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
             padding: 10px;
-            color: transparent;
+            box-sizing: border-box;
             font-weight: bold;
-            font-size: 0.9rem;
-            transition: transform 0.3s, background-color 0.3s;
-            user-select: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 1rem;
         }
 
-        .card.flipped {
-            background-color: white;
+        /* Cara del darrere (la que es veu al principi) */
+        .card-back {
+            background-color: var(--card-back);
+            color: transparent; /* No mostrem text aquí */
+        }
+
+        /* Cara del davant (la que té el text, girada 180 graus inicialment) */
+        .card-front {
+            background-color: var(--card-front);
             color: #333;
-            transform: rotateY(180deg);
+            transform: rotateY(180deg); /* Ja està girada, així que al fer el gir de 180 de la mare es veu bé */
         }
 
-        .card.matched {
-            background-color: #d4edda;
-            color: #155724;
-            cursor: default;
-            visibility: hidden; /* Opcional: fer desaparèixer les que ja estan fetes */
-        }
-
+        /* Adaptació per a mòbils */
         @media (max-width: 600px) {
-            .game-grid { grid-template-columns: repeat(3, 1fr); }
-            .card { height: 100px; font-size: 0.8rem; }
+            .game-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .card-container { height: 100px; }
+            .card-face { font-size: 0.8rem; padding: 5px; }
         }
     </style>
 </head>
 <body>
 
-    <h1>🔬 El Repte de la Cèl·lula</h1>
+    <h1><span>🔬</span> El Repte de la Cèl·lula</h1>
     <div class="stats">Parelles trobades: <span id="score">0</span> / 6</div>
 
     <div class="game-grid" id="grid"></div>
 
     <script>
+        // Les dades de les parelles
         const data = [
             { id: 1, text: "Nucli" }, { id: 1, text: "Controla la cèl·lula i l'ADN" },
             { id: 2, text: "Membrana" }, { id: 2, text: "Envolta i protegeix la cèl·lula" },
@@ -89,52 +115,99 @@
 
         let flippedCards = [];
         let matchedCount = 0;
+        let lockBoard = false; // Per evitar clicar més cartes mentre es comprova
         const grid = document.getElementById('grid');
         const scoreDisplay = document.getElementById('score');
 
-        // Barrejar les cartes
+        // Funció per barrejar (algorisme Fisher-Yates)
         function shuffle(array) {
-            return array.sort(() => Math.random() - 0.5);
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
         }
 
+        // Funció per crear el tauler
         function createBoard() {
-            const shuffledData = shuffle([...data]);
-            shuffledData.forEach((item, index) => {
-                const card = document.createElement('div');
-                card.classList.add('card');
-                card.dataset.id = item.id;
-                card.innerHTML = `<span>${item.text}</span>`;
-                card.addEventListener('click', flipCard);
-                grid.appendChild(card);
+            grid.innerHTML = ''; // Netejar el tauler
+            const shuffledData = shuffle([...data]); // Clonar i barrejar
+            
+            shuffledData.forEach((item) => {
+                // Crear el contenidor 3D
+                const cardContainer = document.createElement('div');
+                cardContainer.classList.add('card-container');
+                cardContainer.dataset.id = item.id;
+                cardContainer.addEventListener('click', flipCard);
+
+                // Crear la cara del darrere
+                const cardBack = document.createElement('div');
+                cardBack.classList.add('card-face', 'card-back');
+                cardBack.textContent = "?"; // Un simple interrogant
+
+                // Crear la cara del davant (amb el text)
+                const cardFront = document.createElement('div');
+                cardFront.classList.add('card-face', 'card-front');
+                cardFront.innerHTML = `<span>${item.text}</span>`;
+
+                // Ajuntar-ho tot
+                cardContainer.appendChild(cardBack);
+                cardContainer.appendChild(cardFront);
+                grid.appendChild(cardContainer);
             });
         }
 
+        // Funció per girar la carta
         function flipCard() {
-            if (flippedCards.length < 2 && !this.classList.contains('flipped') && !this.classList.contains('matched')) {
-                this.classList.add('flipped');
-                flippedCards.push(this);
+            if (lockBoard) return;
+            if (this === flippedCards[0]) return; // Evitar clicar dues vegades la mateixa
 
-                if (flippedCards.length === 2) {
-                    setTimeout(checkMatch, 800);
-                }
+            this.classList.add('flipped');
+
+            if (flippedCards.length === 0) {
+                // Primera carta girada
+                flippedCards.push(this);
+            } else {
+                // Segona carta girada
+                flippedCards.push(this);
+                lockBoard = true; // Bloquejar el tauler
+                checkMatch();
             }
         }
 
+        // Funció per comprovar si hi ha parella
         function checkMatch() {
             const [card1, card2] = flippedCards;
+            
             if (card1.dataset.id === card2.dataset.id) {
-                card1.classList.add('matched');
-                card2.classList.add('matched');
-                matchedCount++;
-                scoreDisplay.textContent = matchedCount;
-                if (matchedCount === 6) alert("Felicitats! Ets un expert en la cèl·lula!");
+                // És una parella!
+                setTimeout(() => {
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    matchedCount++;
+                    scoreDisplay.textContent = matchedCount;
+                    
+                    if (matchedCount === 6) {
+                        setTimeout(() => alert("🎉 Felicitats! Ets un expert en la cèl·lula!"), 300);
+                    }
+                    resetBoard();
+                }, 600); // Temps per veure la segona carta
             } else {
-                card1.classList.remove('flipped');
-                card2.classList.remove('flipped');
+                // No és parella, les tornem a girar
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    resetBoard();
+                }, 1200); // Temps perquè l'alumne memoritzi
             }
-            flippedCards = [];
         }
 
+        // Reiniciar les variables del torn
+        function resetBoard() {
+            [flippedCards, lockBoard] = [[], false];
+        }
+
+        // Iniciar el joc
         createBoard();
     </script>
 </body>
