@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joc de la Cèl·lula - 6è Primària</title>
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --secondary: #2196F3;
+            --bg: #f4f7f6;
+            --card-back: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 { color: #333; margin-bottom: 10px; }
+        .stats { margin-bottom: 20px; font-size: 1.2rem; font-weight: bold; }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .card {
+            height: 120px;
+            background-color: var(--card-back);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+            color: transparent;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: transform 0.3s, background-color 0.3s;
+            user-select: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card.flipped {
+            background-color: white;
+            color: #333;
+            transform: rotateY(180deg);
+        }
+
+        .card.matched {
+            background-color: #d4edda;
+            color: #155724;
+            cursor: default;
+            visibility: hidden; /* Opcional: fer desaparèixer les que ja estan fetes */
+        }
+
+        @media (max-width: 600px) {
+            .game-grid { grid-template-columns: repeat(3, 1fr); }
+            .card { height: 100px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🔬 El Repte de la Cèl·lula</h1>
+    <div class="stats">Parelles trobades: <span id="score">0</span> / 6</div>
+
+    <div class="game-grid" id="grid"></div>
+
+    <script>
+        const data = [
+            { id: 1, text: "Nucli" }, { id: 1, text: "Controla la cèl·lula i l'ADN" },
+            { id: 2, text: "Membrana" }, { id: 2, text: "Envolta i protegeix la cèl·lula" },
+            { id: 3, text: "Citoplasma" }, { id: 3, text: "Líquid on suren els orgànuls" },
+            { id: 4, text: "Mitocòndries" }, { id: 4, text: "Fabriquen l'energia" },
+            { id: 5, text: "Cloroplasts" }, { id: 5, text: "Fan la fotosíntesi (Vegetal)" },
+            { id: 6, text: "Vacúols" }, { id: 6, text: "Magatzem d'aigua i nutrients" }
+        ];
+
+        let flippedCards = [];
+        let matchedCount = 0;
+        const grid = document.getElementById('grid');
+        const scoreDisplay = document.getElementById('score');
+
+        // Barrejar les cartes
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function createBoard() {
+            const shuffledData = shuffle([...data]);
+            shuffledData.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.id = item.id;
+                card.innerHTML = `<span>${item.text}</span>`;
+                card.addEventListener('click', flipCard);
+                grid.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (flippedCards.length < 2 && !this.classList.contains('flipped') && !this.classList.contains('matched')) {
+                this.classList.add('flipped');
+                flippedCards.push(this);
+
+                if (flippedCards.length === 2) {
+                    setTimeout(checkMatch, 800);
+                }
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            if (card1.dataset.id === card2.dataset.id) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedCount++;
+                scoreDisplay.textContent = matchedCount;
+                if (matchedCount === 6) alert("Felicitats! Ets un expert en la cèl·lula!");
+            } else {
+                card1.classList.remove('flipped');
+                card2.classList.remove('flipped');
+            }
+            flippedCards = [];
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
