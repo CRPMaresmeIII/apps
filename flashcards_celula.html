@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Targetes d'Estudi: La Cèl·lula</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --bg: #f0f3f7;
+            --text: #2d3436;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            perspective: 1000px;
+        }
+
+        h1 { color: var(--text); margin-bottom: 30px; text-align: center; }
+
+        /* Estructura de la targeta */
+        .flashcard {
+            width: 100%;
+            height: 300px;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            padding: 30px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        /* Cara de davant (Pregunta) */
+        .front {
+            background: white;
+            border: 4px solid var(--primary);
+        }
+
+        .front h2 { color: var(--primary); font-size: 1.2rem; text-transform: uppercase; margin-bottom: 20px; }
+        .front p { font-size: 1.5rem; font-weight: bold; color: var(--text); }
+
+        /* Cara de darrere (Resposta) */
+        .back {
+            background: var(--primary);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .back h2 { font-size: 1.2rem; margin-bottom: 15px; opacity: 0.9; }
+        .back p { font-size: 1.3rem; line-height: 1.5; }
+
+        /* Controls */
+        .controls {
+            margin-top: 40px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            background: var(--text);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        button:hover { background: #000; transform: translateY(-2px); }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .counter { font-weight: bold; color: var(--text); }
+    </style>
+</head>
+<body>
+
+    <h1>🗂️ Targetes de Repàs</h1>
+
+    <div class="container">
+        <div class="flashcard" id="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-face front">
+                <h2>Pregunta</h2>
+                <p id="question-text">Carregant...</p>
+                <small style="margin-top:20px; color:#999;">(Clica per veure la resposta)</small>
+            </div>
+            <div class="card-face back">
+                <h2>Resposta</h2>
+                <p id="answer-text">...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="prevBtn" onclick="changeCard(-1)">⬅️ Anterior</button>
+        <span class="counter"><span id="currentIdx">1</span> / <span id="totalCards">0</span></span>
+        <button id="nextBtn" onclick="changeCard(1)">Següent ➡️</button>
+    </div>
+
+    <script>
+        const cards = [
+            { q: "Què és la cèl·lula?", a: "És la unitat més petita que forma els éssers vius i que està viva." },
+            { q: "Quina diferència principal hi ha entre cèl·lula animal i vegetal?", a: "La vegetal té paret cel·lular rígida i cloroplasts per fer la fotosíntesi." },
+            { q: "Què és l'ADN?", a: "És la informació genètica que diu com és i com funciona l'ésser viu. Està dins del nucli." },
+            { q: "Què fan els mitocòndries?", a: "Són com les fàbriques d'energia de la cèl·lula mitjançant la respiració cel·lular." },
+            { q: "Per a què serveixen els vacúols?", a: "Són magatzems d'aigua, nutrients i substàncies de deixalla." },
+            { q: "És el mateix un orgànul que una cèl·lula?", a: "No, els orgànuls són les 'peces' o 'òrgans' petits que hi ha dins del citoplasma de la cèl·lula." }
+        ];
+
+        let currentIndex = 0;
+        const cardElement = document.getElementById('card');
+        const qText = document.getElementById('question-text');
+        const aText = document.getElementById('answer-text');
+        const currentIdxDisplay = document.getElementById('currentIdx');
+        const totalDisplay = document.getElementById('totalCards');
+
+        function updateCard() {
+            // Treure el gir si estava girada
+            cardElement.classList.remove('flipped');
+            
+            // Esperar una mica que acabi l'animació abans de canviar el text
+            setTimeout(() => {
+                qText.innerText = cards[currentIndex].q;
+                aText.innerText = cards[currentIndex].a;
+                currentIdxDisplay.innerText = currentIndex + 1;
+            }, 150);
+
+            // Control de botons
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            document.getElementById('nextBtn').disabled = currentIndex === cards.length - 1;
+        }
+
+        function changeCard(step) {
+            currentIndex += step;
+            updateCard();
+        }
+
+        // Inicialitzar
+        totalDisplay.innerText = cards.length;
+        updateCard();
+    </script>
+</body>
+</html>
